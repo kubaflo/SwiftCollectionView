@@ -15,15 +15,30 @@ class MainViewController: UIViewController {
     
     var previousSelection: DemoCollectionViewCell?
     
+    var tap: UIGestureRecognizer?
+    
     private var containerView : UIView = {
         let container = UIView()
-        container.backgroundColor = .red
+        container.backgroundColor = .gray
         return container
+    }()
+    
+    private var button : UIButton = {
+        let button = UIButton()
+        button.backgroundColor = .purple
+        button.translatesAutoresizingMaskIntoConstraints = false;
+        return button
+    }()
+    
+    private var switcher : UISwitch = {
+        let switcher = UISwitch()
+        switcher.translatesAutoresizingMaskIntoConstraints = false
+        return switcher
     }()
     
     private lazy var mainCollectionView : UICollectionView = {
         let flowLayout = UICollectionViewFlowLayout()
-        flowLayout.scrollDirection = .horizontal
+        flowLayout.scrollDirection = .vertical
         flowLayout.minimumLineSpacing = 0
         flowLayout.minimumInteritemSpacing = 0
         let collectionView = UICollectionView(frame:.zero, collectionViewLayout: flowLayout)
@@ -38,6 +53,7 @@ class MainViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .white
         setupView()
     }
     
@@ -49,7 +65,30 @@ class MainViewController: UIViewController {
     
     @objc func handleTap(_ sender: UITapGestureRecognizer)
     {
-        print("Hello World")
+        let alert = UIAlertController(title: "Hello!", message: "Gesture recognizer", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Ok", style: .default, handler: nil)
+        alert.addAction(okAction)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    @objc func switchValueChanged(_ sender: UISwitch)
+    {
+        if(sender.isOn)
+        {
+            containerView.addGestureRecognizer(tap!)
+        }
+        else
+        {
+            containerView.removeGestureRecognizer(tap!)
+        }
+    }
+    
+    @objc func buttonClicked()
+    {
+        let alert = UIAlertController(title: "Hello!", message: "Button was clicked", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "Ok", style: .default, handler: nil)
+        alert.addAction(okAction)
+        present(alert, animated: true, completion: nil)
     }
     
     private func setupView() {
@@ -58,29 +97,35 @@ class MainViewController: UIViewController {
             return
         }
         
-//        let tap = UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:)))
-//        containerView.addGestureRecognizer(tap)
+        tap = UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:)))
         
-        // Set containerView frame based on safeAreaInsets
         containerView.frame = CGRect(
             x: 0,
             y: rootView.safeAreaInsets.top,
             width: rootView.frame.width,
-            height: 500
+            height: 400
         )
         
-        // Add containerView to the view hierarchy
-        view.addSubview(containerView)
+        button.setTitle("Hello World!", for: .normal)
+        button.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
         
-        // Add mainCollectionView to containerView
+        switcher.addTarget(self, action: #selector(switchValueChanged), for: .valueChanged)
+    
         containerView.addSubview(mainCollectionView)
+        containerView.addSubview(button)
+        view.addSubview(containerView)
+        view.addSubview(switcher)
+    
         
-        // Use Auto Layout for mainCollectionView
         NSLayoutConstraint.activate([
             mainCollectionView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            mainCollectionView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -50),
+            mainCollectionView.heightAnchor.constraint(equalToConstant: 300),
             mainCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            mainCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+            mainCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            button.topAnchor.constraint(equalTo: mainCollectionView.bottomAnchor, constant: 20),
+            button.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            button.widthAnchor.constraint(equalToConstant: 200),
+            switcher.topAnchor.constraint(equalTo: containerView.bottomAnchor)
         ])
     }
 
@@ -99,20 +144,24 @@ extension MainViewController : UICollectionViewDelegate, UICollectionViewDataSou
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let size = mainCollectionView.frame.width/3
-        return CGSize(width: size, height: size)
+        let size = mainCollectionView.frame.width
+        return CGSize(width: size - 40, height: 50)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        let width = mainCollectionView.frame.width - 40
+        let x = (mainCollectionView.frame.width - width)
+        return UIEdgeInsets(top: 0, left: x/2, bottom: 0, right: x/2)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Deselect the previously selected cell
            if let previousCell = previousSelection {
-               previousCell.backgroundColor = .clear // Reset the previous cell's background color
+               previousCell.backgroundColor = .clear
            }
         
-        // Get the currently selected cell
           if let selectedCell = collectionView.cellForItem(at: indexPath) as? DemoCollectionViewCell {
-              selectedCell.backgroundColor = .green // Highlight the selected cell
-              previousSelection = selectedCell // Update the previousSelection to the currently selected cell
+              selectedCell.backgroundColor = .green
+              previousSelection = selectedCell
           }
     }
     
